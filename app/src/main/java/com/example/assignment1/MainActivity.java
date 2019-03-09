@@ -1,5 +1,6 @@
 package com.example.assignment1;
 
+import android.media.session.MediaSession;
 import android.nfc.Tag;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -14,6 +15,8 @@ import android.widget.Toast;
 import com.example.assignment1.data.model.post;
 import com.example.assignment1.data.remote.APIService;
 import com.example.assignment1.data.remote.ApiUtils;
+
+import java.io.IOException;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -39,10 +42,19 @@ public class MainActivity extends AppCompatActivity {
         login = findViewById(R.id.login);
 
         mAPIService = ApiUtils.getAPIService();
+
         login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
                 checkDataEntered();
+                String name = username.getText().toString().trim();
+
+                if(!TextUtils.isEmpty(name) ) {
+
+                    sendPost(name);
+
+                }
 
             }
         });
@@ -58,26 +70,27 @@ public class MainActivity extends AppCompatActivity {
             if (isEmpty(username)) {
             Toast t = Toast.makeText(this, "You must enter user name to register!", Toast.LENGTH_SHORT);
             t.show();
-
             }
             //space
             if (username.getText().toString().contains(" ")) {
                 username.setError("No Spaces Allowed");
                 }
-
         }
     private static final String TAG = "MainActivity";
-    public void sendPost(String name, String token) {
 
-        mAPIService.savePost(1, name,token ).enqueue(new Callback<post>() {
+    public void sendPost(String name) {
+
+        Call<post> call =  mAPIService.savePost(name);
+
+        call.enqueue(new Callback<post>() {
+
             @Override
-
             public void onResponse(Call<post> call, Response<post> response) {
 
-                if(response.isSuccessful()) {
-                    showResponse(response.body().toString());
-                    Log.i(TAG, "post submitted to API." + response.body().toString());
-                }
+               if(response.isSuccessful()) {
+                  showResponse(response.body().toString());
+                   Log.i(TAG, "post submitted to API." + response.toString());
+            }
             }
 
             @Override
@@ -88,13 +101,17 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public interface OnGetUserCallback {
+        void onGetUser(post user);
+
+        void onError(Throwable t);
+    }
+
     public void showResponse(String response) {
         if(username.getVisibility() == View.GONE) {
             username.setVisibility(View.VISIBLE);
         }
         username.setText(response);
     }
-
-
 
 }
